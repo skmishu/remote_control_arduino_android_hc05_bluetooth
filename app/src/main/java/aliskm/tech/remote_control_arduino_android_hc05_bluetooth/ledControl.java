@@ -36,7 +36,7 @@ public class ledControl extends AppCompatActivity {
     static final UUID myUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     Button btnOn, btnOff, btnDis, btnSendMessage, btnSpecialCommand;
     SeekBar speedBar;
-    TextView lumn, tvMessage;
+    TextView lumn, tvMessage, tvLive;
     EditText etMessage, etSpecCommand;
     String address = null;
     BluetoothAdapter myBluetooth = null;
@@ -66,6 +66,7 @@ public class ledControl extends AppCompatActivity {
         speedBar = (SeekBar) findViewById(R.id.seekBar);
         lumn = (TextView) findViewById(R.id.lumn);
         tvMessage = (TextView) findViewById(R.id.messageTv);
+        tvLive = (TextView) findViewById(R.id.tvLive);
 
         new ConnectBT().execute(); //Call the class to connect
 
@@ -84,14 +85,20 @@ public class ledControl extends AppCompatActivity {
 
                     HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshot.getValue();
                     assert value != null;
-                    String message = "" + value.get("message");
-                    tvMessage.setText(message);
 
                     if (btSocket != null) {
                         try {
-                            deviceStatus = Integer.valueOf(Objects.requireNonNull(value.get("speed")).toString());
-                            speedBar.setProgress(deviceStatus);
-                            lumn.setText(String.valueOf(deviceStatus));
+                            if (value.get("speed") != null) {
+                                deviceStatus = Integer.valueOf(Objects.requireNonNull(value.get("speed")).toString());
+                                speedBar.setProgress(deviceStatus);
+                                lumn.setText(String.valueOf(deviceStatus));
+                            } else if (value.get("live") != null) {
+                                tvLive.setText(value.get("live").toString());
+                                btSocket.getOutputStream().write(value.get("live").toString().getBytes());
+                            } else if (value.get("message") != null) {
+                                String message = "" + value.get("message");
+                                tvMessage.setText(message);
+                            }
                         } catch (Exception e) {
                             msg("Error");
                         }
@@ -112,6 +119,7 @@ public class ledControl extends AppCompatActivity {
             public void onClick(View v) {
                 try {
                     if (btSocket != null && etSpecCommand.getText().toString().length() > 0) {
+                        myRef.child("live").setValue(etSpecCommand.getText().toString());
                         btSocket.getOutputStream().write(etSpecCommand.getText().toString().getBytes());
                     } else {
                         if (btSocket == null)

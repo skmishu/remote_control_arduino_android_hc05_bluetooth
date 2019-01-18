@@ -10,6 +10,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -20,13 +21,27 @@ import java.util.Set;
 
 
 public class DeviceList extends AppCompatActivity {
+    public static String EXTRA_ADDRESS = "device_address";
     //widgets
     ImageView btnPaired;
     ListView devicelist;
     //Bluetooth
     private BluetoothAdapter myBluetooth = null;
     private Set<BluetoothDevice> pairedDevices;
-    public static String EXTRA_ADDRESS = "device_address";
+    private AdapterView.OnItemClickListener myListClickListener = new AdapterView.OnItemClickListener() {
+        public void onItemClick(AdapterView<?> av, View v, int arg2, long arg3) {
+            // Get the device MAC address, the last 17 chars in the View
+            String info = ((TextView) v).getText().toString();
+            String address = info.substring(info.length() - 17);
+
+            // Make an intent to start next activity.
+            Intent i = new Intent(DeviceList.this, ledControl.class);
+
+            //Change the activity.
+            i.putExtra(EXTRA_ADDRESS, address); //this will be received at ledControl (class) Activity
+            startActivity(i);
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +51,13 @@ public class DeviceList extends AppCompatActivity {
         //Calling widgets
         btnPaired = (ImageView) findViewById(R.id.button);
         devicelist = (ListView) findViewById(R.id.listView);
+        Button btnRC = findViewById(R.id.btnRC);
+        btnRC.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(DeviceList.this, RemoteControlOnly.class));
+            }
+        });
 
         //if the device has bluetooth
         myBluetooth = BluetoothAdapter.getDefaultAdapter();
@@ -78,22 +100,6 @@ public class DeviceList extends AppCompatActivity {
         devicelist.setOnItemClickListener(myListClickListener); //Method called when the device from the list is clicked
 
     }
-
-    private AdapterView.OnItemClickListener myListClickListener = new AdapterView.OnItemClickListener() {
-        public void onItemClick(AdapterView<?> av, View v, int arg2, long arg3) {
-            // Get the device MAC address, the last 17 chars in the View
-            String info = ((TextView) v).getText().toString();
-            String address = info.substring(info.length() - 17);
-
-            // Make an intent to start next activity.
-            Intent i = new Intent(DeviceList.this, ledControl.class);
-
-            //Change the activity.
-            i.putExtra(EXTRA_ADDRESS, address); //this will be received at ledControl (class) Activity
-            startActivity(i);
-        }
-    };
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
