@@ -34,10 +34,10 @@ public class ledControl extends AppCompatActivity {
 
     //SPP UUID. Look for it
     static final UUID myUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-    Button btnOn, btnOff, btnDis, btnSendMessage;
+    Button btnOn, btnOff, btnDis, btnSendMessage, btnSpecialCommand;
     SeekBar speedBar;
     TextView lumn, tvMessage;
-    EditText etMessage;
+    EditText etMessage, etSpecCommand;
     String address = null;
     BluetoothAdapter myBluetooth = null;
     BluetoothSocket btSocket = null;
@@ -57,8 +57,10 @@ public class ledControl extends AppCompatActivity {
 
         //call the widgtes
         btnOn = (Button) findViewById(R.id.button2);
+        btnSpecialCommand = (Button) findViewById(R.id.atCommandSendBtn);
         btnSendMessage = (Button) findViewById(R.id.sendBtn);
         etMessage = (EditText) findViewById(R.id.etMessage);
+        etSpecCommand = (EditText) findViewById(R.id.etCommand);
         btnOff = (Button) findViewById(R.id.button3);
         btnDis = (Button) findViewById(R.id.button4);
         speedBar = (SeekBar) findViewById(R.id.seekBar);
@@ -82,22 +84,18 @@ public class ledControl extends AppCompatActivity {
 
                     HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshot.getValue();
                     assert value != null;
-
                     String message = "" + value.get("message");
                     tvMessage.setText(message);
 
-
-
                     if (btSocket != null) {
                         try {
-                            deviceStatus = Integer.valueOf( Objects.requireNonNull(value.get("speed")).toString());
+                            deviceStatus = Integer.valueOf(Objects.requireNonNull(value.get("speed")).toString());
                             speedBar.setProgress(deviceStatus);
                             lumn.setText(String.valueOf(deviceStatus));
                         } catch (Exception e) {
                             msg("Error");
                         }
                     }
-
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -109,6 +107,23 @@ public class ledControl extends AppCompatActivity {
             }
         });
 
+        btnSpecialCommand.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    if (btSocket != null && etSpecCommand.getText().toString().length() > 0) {
+                        btSocket.getOutputStream().write(etSpecCommand.getText().toString().getBytes());
+                    } else {
+                        if (btSocket == null)
+                            msg("bluetooth socket is null!");
+                        if (etSpecCommand.getText().toString().length() < 1)
+                            msg("please write a command!");
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
         btnSendMessage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
